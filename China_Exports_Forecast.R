@@ -142,3 +142,45 @@ legend("topleft", legend = c("Observed", "Fitted", "Predicted", "95% PI"), lty =
 # assumption can lead to an optimal choice of variance-stabilizing transformation
 par(mfrow=c(1,1))
 tsdiag(m5)
+
+
+# ARIMAX
+
+m5_1 <- Arima(log(exp_train), order = c(1,1,1), seasonal = list(order = c(0,1,0), period = 12), xreg=log(imp_train),method = "CSS")
+m5_2 <- Arima(log(exp_train), order = c(2,1,1), seasonal = list(order = c(2,1,1), period = 12), xreg=log(imp_train),method = "CSS")
+m5_3 <- Arima(log(exp_train), order = c(2,1,1), seasonal = list(order = c(1,1,1), period = 12), xreg=log(imp_train),method = "CSS")
+
+predicted <- data.frame(forecast(m5_1, h = 72, level = 95, xreg = log(imp_test_orig)))$Point.Forecast
+predicted <- exp(predicted)
+results <- cbind(predicted, exp_test)
+RMSE_1 <- sqrt(mean((results$predicted-results$value)^2))
+RMSE_1
+
+predicted <- data.frame(forecast(m5_2, h = 72, level = 95, xreg = log(imp_test_orig)))$Point.Forecast
+predicted <- exp(predicted)
+results <- cbind(predicted, exp_test)
+RMSE_2 <- sqrt(mean((results$predicted-results$value)^2))
+RMSE_2
+
+predicted <- data.frame(forecast(m5_3, h = 72, level = 95, xreg = log(imp_test_orig)))$Point.Forecast
+predicted <- exp(predicted)
+results <- cbind(predicted, exp_test)
+RMSE_3 <- sqrt(mean((results$predicted-results$value)^2))
+RMSE_3
+
+sigma2 <- c(m5_1$sigma2,m5_2$sigma2,m5_3$sigma2)
+loglik<-c(m5_1$loglik,m5_2$loglik,m5_3$loglik)
+rmse <- c(RMSE_1, RMSE_2, RMSE_3)
+d <- rbind(sigma2,loglik, rmse)
+
+predicted_m5 <- forecast(m5, h = 72, level = 95, xreg = log(imp_test))
+predicted_m5 <- data.frame(predicted_m5)
+predicted_m5 <- predicted_m5$Point.Forecast
+predicted_m5 <- exp(predicted_m5)
+results_m5 <- cbind(predicted_m5, exp_test)
+RMSE_m5 <- sqrt(mean((results_m5$predicted-results_m5$value)^2))
+# SARIMA(1,1,1)(0,1,0) appears to have better fit
+
+par(mfrow=c(1,1))
+tsdiag(m5_1)
+
